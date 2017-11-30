@@ -1,0 +1,84 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: kubeadm-probe
+  labels:
+    app: kubeadm-probe
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: kubeadm-probe
+  labels:
+    app: kubeadm-probe
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeadm-probe
+subjects:
+- kind: ServiceAccount
+  name: kubeadm-probe
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kubeadm-probe
+  namespace: kube-system
+  labels:
+    app: kubeadm-probe
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: kubeadm-probe
+  namespace: kube-system
+  labels:
+    app: kubeadm-probe
+spec:
+  template:
+    metadata:
+      labels:
+        name: kubeadm-probe
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
+    spec:
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      serviceAccountName: kubeadm-probe
+      containers:
+      - image: busybox
+        command:
+        - /bin/sh
+        - -c
+        - 'while true; do kubectl annotate --overwrite --token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) nodes $NODE_NAME cloud.appscode.com/kubeadm-version=$(kubeadm version -o short); sleep 300; done'
+        imagePullPolicy: IfNotPresent
+        name: busybox
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - mountPath: /usr/bin/kubeadm
+          name: kubeadm
+          readOnly: true
+        - mountPath: /usr/bin/kubectl
+          name: kubectl
+          readOnly: true
+      volumes:
+      - name: kubeadm
+        hostPath:
+          path: /usr/bin/kubeadm
+      - name: kubectl
+        hostPath:
+          path: /usr/bin/kubectl

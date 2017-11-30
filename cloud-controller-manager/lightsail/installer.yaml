@@ -1,0 +1,48 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: cloud-controller-manager
+  namespace: kube-system
+spec:
+  template:
+    metadata:
+      labels:
+        app: cloud-controller-manager
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      hostNetwork: true
+      dnsPolicy: Default
+      tolerations:
+        # this taint is set by all kubelets running `--cloud-provider=external`
+        # so we should tolerate it to schedule the digitalocean ccm
+        - key: "node.cloudprovider.kubernetes.io/uninitialized"
+          value: "true"
+          effect: "NoSchedule"
+        - key: "CriticalAddonsOnly"
+          operator: "Exists"
+        # cloud controller manages should be able to run on masters
+        - key: "node-role.kubernetes.io/master"
+          effect: NoSchedule
+      serviceAccountName: cloud-controller-manager
+      containers:
+      - image: appscode/pharm-controller-manager:0.1.0-alpha.0
+        name: ccm
+        args:
+          - up
+          - --cloud-config=/etc/kubernetes/ccm/cloud-config
+          - --cloud-provider=lightsail
+          - --v=3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        volumeMounts:
+        - mountPath: /etc/kubernetes/ccm
+          name: cloud-config
+      volumes:
+      - name: cloud-config
+        hostPath:
+          path: /etc/kubernetes/ccm
