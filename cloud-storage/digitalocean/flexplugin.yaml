@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: pharmer-flex
+  namespace: kube-system
+spec:
+  template:
+    metadata:
+      name: pharmer-flex
+      labels:
+        app: pharmer-flex
+    spec:
+      tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/master
+      containers:
+        - image: pharmer/flexvolumes:canary
+          imagePullPolicy: Always
+          name: pharmer-flex
+          securityContext:
+              privileged: true
+          env:
+            - name: PROVIDER
+              value: digitalocean
+          volumeMounts:
+            - mountPath: /flexmnt
+              name: flexvolume-mount
+            - name: flexvolume-secret
+              mountPath: /flexsecret
+            - name: cloud-secret
+              mountPath: /cloudsecret
+      volumes:
+        - name: flexvolume-mount
+          hostPath:
+            path: /usr/libexec/kubernetes/kubelet-plugins/volume/exec
+        - name: flexvolume-secret
+          hostPath:
+            path: /var/run/secrets/pharmer/flexvolmues
+        - name: cloud-secret
+          secret:
+            secretName: digitalocean
