@@ -24,7 +24,7 @@ spec:
             secretKeyRef:
               key: token
               name: digitalocean
-        image: pharmer/cloud-storage:canary
+        image: pharmer/cloud-storage:1.10.0
         imagePullPolicy: Always
         name: cloud-storage
         args:
