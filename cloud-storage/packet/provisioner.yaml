@@ -1,0 +1,44 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  labels:
+    app: pharmer-provisioner
+  name: pharmer-provisioner
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pharmer-provisioner
+  template:
+    metadata:
+      labels:
+        app: pharmer-provisioner
+    spec:
+      containers:
+      - env:
+        - name: PROVIDER
+          value: packet
+        - name: PACKET_API_KEY
+          valueFrom:
+            secretKeyRef:
+              key: apiKey
+              name: packet
+        - name: PACKET_PROJECT_ID
+          valueFrom:
+            secretKeyRef:
+              key: projectID
+              name: packet
+        image: pharmer/cloud-storage:1.10.0
+        imagePullPolicy: Always
+        name: cloud-storage
+        args:
+        - init
+        resources:
+          limits:
+            cpu: 50m
+            memory: 64Mi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+      serviceAccount: pharmer-provisioner
