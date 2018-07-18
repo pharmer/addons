@@ -28,7 +28,7 @@ spec:
           effect: NoSchedule
       serviceAccountName: cloud-controller-manager
       containers:
-      - image: pharmer/openstack-cloud-controller-manager:1.10.1
+      - image: pharmer/openstack-cloud-controller-manager:k-1.11
         name: ccm
         args:
           - up

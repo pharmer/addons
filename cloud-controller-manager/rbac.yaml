@@ -1,11 +1,9 @@
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   annotations:
     rbac.authorization.kubernetes.io/autoupdate: "true"
   name: system:cloud-controller-manager
-  labels:
-    kubernetes.io/bootstrapping: rbac-defaults
 rules:
 - apiGroups:
   - ""
@@ -41,7 +39,10 @@ rules:
   resources:
   - services/status
   verbs:
+  - list
+  - patch
   - update
+  - watch
 - apiGroups:
   - ""
   resources:

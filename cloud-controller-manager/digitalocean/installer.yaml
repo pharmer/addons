@@ -28,7 +28,7 @@ spec:
           effect: NoSchedule
       serviceAccountName: cloud-controller-manager
       containers:
-      - image: digitalocean/digitalocean-cloud-controller-manager:v0.1.4
+      - image: digitalocean/digitalocean-cloud-controller-manager:v0.1.6
         name: ccm
         command:
           - "/bin/digitalocean-cloud-controller-manager"
