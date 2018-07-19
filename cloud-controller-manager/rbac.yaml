@@ -59,6 +59,7 @@ rules:
   - update
   - watch
   - patch
+  - initialize
 - apiGroups:
   - ""
   resources:
