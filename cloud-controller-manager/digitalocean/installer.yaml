@@ -1,9 +1,14 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
+  labels:
+    app: cloud-controller-manager
   name: cloud-controller-manager
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      app: cloud-controller-manager
   template:
     metadata:
       labels:
