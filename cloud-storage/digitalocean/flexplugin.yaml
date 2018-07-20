@@ -14,7 +14,7 @@ spec:
       - effect: NoSchedule
         key: node-role.kubernetes.io/master
       containers:
-        - image: pharmer/flexvolumes:1.10.0
+        - image: pharmer/flexvolumes:1.11.0.beta-1
           imagePullPolicy: Always
           name: pharmer-flex
           securityContext:
