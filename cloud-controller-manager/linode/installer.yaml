@@ -33,7 +33,7 @@ spec:
           effect: NoSchedule
       serviceAccountName: cloud-controller-manager
       containers:
-      - image: pharmer/cloud-controller-manager:1.13.0
+      - image: pharmer/cloud-controller-manager:k-1.11
         name: ccm
         args:
           - up
