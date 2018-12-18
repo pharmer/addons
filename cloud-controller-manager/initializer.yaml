@@ -1,4 +1,4 @@
-kind: InitializerConfiguration
+kind: InitializerConfigurations
 apiVersion: admissionregistration.k8s.io/v1alpha1
 metadata:
   name: pvlabel.kubernetes.io
