@@ -1,53 +1,83 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ccm-linode
+  namespace: kube-system
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: system:ccm-linode
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  # TODO: make these permissions more fine-grained
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: ccm-linode
+  namespace: kube-system
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
+  name: ccm-linode
   labels:
-    app: cloud-controller-manager
-  name: cloud-controller-manager
+    app: ccm-linode
   namespace: kube-system
 spec:
   selector:
     matchLabels:
-      app: cloud-controller-manager
+      app: ccm-linode
   template:
     metadata:
       labels:
-        app: cloud-controller-manager
-      annotations:
-        scheduler.alpha.kubernetes.io/critical-pod: ''
+        app: ccm-linode
     spec:
+      serviceAccountName: ccm-linode
       nodeSelector:
+        # The CCM will only run on a Node labelled as a master, you may want to change this
         node-role.kubernetes.io/master: ""
-      hostNetwork: true
-      dnsPolicy: Default
       tolerations:
-        # this taint is set by all kubelets running `--cloud-provider=external`
-        # so we should tolerate it to schedule the digitalocean ccm
-        - key: "node.cloudprovider.kubernetes.io/uninitialized"
-          value: "true"
+        # The CCM can run on Nodes tainted as masters
+        - key: "node-role.kubernetes.io/master"
           effect: "NoSchedule"
+        # The CCM is a "critical addon"
         - key: "CriticalAddonsOnly"
           operator: "Exists"
-        # cloud controller manages should be able to run on masters
-        - key: "node-role.kubernetes.io/master"
+        # This taint is set on all Nodes when an external CCM is used
+        - key: node.cloudprovider.kubernetes.io/uninitialized
+          value: "true"
           effect: NoSchedule
-      serviceAccountName: cloud-controller-manager
+        - key: node.kubernetes.io/not-ready
+          operator: Exists
+          effect: NoSchedule
+        - key: node.kubernetes.io/unreachable
+          operator: Exists
+          effect: NoSchedule
+      hostNetwork: true
       containers:
-      - image: pharmer/cloud-controller-manager:k-1.11
-        name: ccm
-        args:
-          - up
-          - --cloud-config=/etc/kubernetes/ccm/cloud-config
+        - image: linode/linode-cloud-controller-manager:latest
+          imagePullPolicy: Always
+          name: ccm-linode
+          args:
           - --cloud-provider=linode
           - --v=3
-        resources:
-          requests:
-            cpu: 100m
-            memory: 50Mi
-        volumeMounts:
-        - mountPath: /etc/kubernetes/ccm
-          name: cloud-config
+          volumeMounts:
+          - mountPath: /etc/kubernetes
+            name: k8s
+          env:
+            - name: LINODE_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ccm-linode
+                  key: apiToken
+            - name: LINODE_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: ccm-linode
+                  key: region
       volumes:
-      - name: cloud-config
+      - name: k8s
         hostPath:
-          path: /etc/kubernetes/ccm
+          path: /etc/kubernetes
