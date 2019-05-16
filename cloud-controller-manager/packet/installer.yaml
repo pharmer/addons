@@ -45,9 +45,10 @@ spec:
             cpu: 100m
             memory: 50Mi
         volumeMounts:
-        - mountPath: /etc/kubernetes/ccm
+        - mountPath: /etc/kubernetes/ccm/
           name: cloud-config
       volumes:
       - name: cloud-config
-        hostPath:
-          path: /etc/kubernetes/ccm
+        secret:
+          secretName: cloud-config
+
